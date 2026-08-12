@@ -1,5 +1,13 @@
 # Changelog
 
+## [7.4.1](https://github.com/juliansteenbakker/mobile_scanner/compare/v7.4.0...v7.4.1) (2026-08-12)
+
+
+### Bug Fixes
+
+* **android:** prevent crash when CameraX fails to initialize in start() ([e3afeba](https://github.com/juliansteenbakker/mobile_scanner/commit/e3afeba728897b9a508eb9a558b2aa54a8291d1b))
+* **android:** prevent host-app crash when CameraX fails to initialize in start() ([3d1c1f9](https://github.com/juliansteenbakker/mobile_scanner/commit/3d1c1f96cd2ab727c50c3f39e9e1ca7df50322d4))
+
 ## 7.4.1
 
 **Bug Fixes**
