@@ -272,6 +272,33 @@ object MobileScannerCameraLensSelector {
     }
 
     /**
+     * Checks whether the device has any camera with the given Camera2 lens facing value.
+     */
+    private fun hasCameraWithFacing(cameraManager: CameraManager, lensFacing: Int): Boolean {
+        return try {
+            cameraManager.cameraIdList.any { cameraId ->
+                cameraManager.getCameraCharacteristics(cameraId)
+                    .get(CameraCharacteristics.LENS_FACING) == lensFacing
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to enumerate cameras", e)
+            false
+        }
+    }
+
+    /**
+     * Checks whether the device has at least one camera of any facing direction.
+     */
+    private fun hasAnyCamera(cameraManager: CameraManager): Boolean {
+        return try {
+            cameraManager.cameraIdList.isNotEmpty()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to enumerate cameras", e)
+            false
+        }
+    }
+
+    /**
      * Select the appropriate camera based on facing direction and lens type.
      *
      * Uses 35mm equivalent focal length calculation for accurate lens classification.
@@ -283,6 +310,22 @@ object MobileScannerCameraLensSelector {
      */
     fun selectCamera(cameraManager: CameraManager, facing: Int, lensType: Int): CameraSelector {
         val lensFacing = if (facing == 0) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
+
+        // Some devices — Waydroid containers, emulators, and kiosk hardware with a
+        // USB webcam — expose their only camera as LENS_FACING_EXTERNAL. CameraX has
+        // no support for external cameras, so requiring FRONT or BACK matches nothing
+        // and bindToLifecycle throws. Fall back to an unfiltered selector so the
+        // external camera is still usable.
+        val camera2Facing = if (facing == 0) {
+            CameraCharacteristics.LENS_FACING_FRONT
+        } else {
+            CameraCharacteristics.LENS_FACING_BACK
+        }
+
+        if (!hasCameraWithFacing(cameraManager, camera2Facing) && hasAnyCamera(cameraManager)) {
+            Log.w(TAG, "No camera with the requested facing direction; falling back to any available camera")
+            return CameraSelector.Builder().build()
+        }
 
         // If no specific lens type is requested, return default camera for facing direction
         if (lensType == LENS_TYPE_ANY) {
